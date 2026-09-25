@@ -20,7 +20,7 @@ maintained in the official `Forum-Fortress/nodebb` repository.
 From the NodeBB root:
 
 ```bash
-npm install nodebb-plugin-forum-fortress@1.0.0 --save
+npm install nodebb-plugin-forum-fortress@1.0.1 --save
 ./nodebb activate nodebb-plugin-forum-fortress
 ./nodebb build
 ./nodebb restart

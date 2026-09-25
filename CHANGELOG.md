@@ -2,6 +2,10 @@
 
 All notable changes to the Forum Fortress NodeBB plugin are documented here.
 
+## 1.0.1 - 2026-09-25
+
+- Updated the NodeBB package catalogue description.
+
 ## 1.0.0 - 2026-09-25
 
 - Initial production NodeBB 4.x integration.

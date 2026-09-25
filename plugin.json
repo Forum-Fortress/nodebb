@@ -1,7 +1,7 @@
 {
   "id": "nodebb-plugin-forum-fortress",
   "name": "Forum Fortress",
-  "description": "Forum Fortress anti-spam and abuse protection for NodeBB.",
+  "description": "Make Forum Spam history with Forum Fortress. One click anti spam protection for NodeBB.",
   "url": "https://github.com/Forum-Fortress/nodebb",
   "library": "./library.js",
   "hooks": [
