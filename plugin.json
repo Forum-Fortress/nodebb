@@ -1,0 +1,28 @@
+{
+  "id": "nodebb-plugin-forum-fortress",
+  "name": "Forum Fortress",
+  "description": "Forum Fortress anti-spam and abuse protection for NodeBB.",
+  "url": "https://github.com/Forum-Fortress/nodebb",
+  "library": "./library.js",
+  "hooks": [
+    { "hook": "static:app.load", "method": "init" },
+    { "hook": "static:api.routes", "method": "addApiRoutes" },
+    { "hook": "filter:admin.header.build", "method": "addAdminNavigation" },
+    { "hook": "filter:register.check", "method": "checkRegistration", "priority": 5 },
+    { "hook": "filter:post.create", "method": "checkPostCreate", "priority": 5 },
+    { "hook": "filter:post.edit", "method": "checkPostEdit", "priority": 5 },
+    { "hook": "filter:user.updateProfile", "method": "checkProfile", "priority": 5 }
+  ],
+  "acpScss": [
+    "public/forum-fortress.scss"
+  ],
+  "acpScripts": [
+    "public/admin.js"
+  ],
+  "modules": {
+    "../admin/plugins/forum-fortress.js": "public/admin.js"
+  },
+  "languages": "languages",
+  "defaultLang": "en-GB",
+  "templates": "templates"
+}

@@ -1,0 +1,56 @@
+{
+  "name": "nodebb-plugin-forum-fortress",
+  "version": "1.0.0",
+  "description": "Forum Fortress anti-spam protection for NodeBB 4.x",
+  "main": "library.js",
+  "license": "GPL-2.0-or-later",
+  "author": "Marscastle Ltd trading as Forum Fortress",
+  "homepage": "https://forumfortress.com/docs/install/nodebb/",
+  "documentation": "https://forumfortress.com/docs/",
+  "status": "https://status.forumfortress.com/",
+  "keywords": [
+    "nodebb",
+    "nodebb-plugin",
+    "anti-spam",
+    "moderation",
+    "security"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Forum-Fortress/nodebb.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Forum-Fortress/nodebb/issues"
+  },
+  "support": {
+    "url": "https://forumfortress.com/#support"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "nbbpm": {
+    "compatibility": "^4.16.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "NOTICE",
+    "languages/",
+    "lib/",
+    "library.js",
+    "plugin.json",
+    "public/",
+    "templates/"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "lint": "eslint . --no-error-on-unmatched-pattern",
+    "check": "node --check library.js && node --check lib/client.js && node --check lib/controllers.js && npm test"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0"
+  }
+}

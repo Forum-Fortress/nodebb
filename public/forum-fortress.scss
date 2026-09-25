@@ -1,0 +1,298 @@
+.ForumFortressDashboard {
+	padding: 24px 0 0;
+}
+
+.ForumFortressPanel {
+	--ff-green: #087443;
+	--ff-green-bright: #159458;
+	--ff-green-soft: rgba(8, 116, 67, 0.1);
+	--ff-amber: #b86313;
+	--ff-border: rgba(127, 127, 127, 0.22);
+	display: grid;
+	gap: 14px;
+}
+
+.ForumFortressCard {
+	overflow: hidden;
+	border: 1px solid var(--ff-border);
+	border-radius: 10px;
+	background: var(--bs-body-bg, var(--body-bg, #fff));
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.ForumFortressHero {
+	border-top: 3px solid var(--ff-green);
+}
+
+.ForumFortressHeroHeader {
+	display: flex;
+	align-items: center;
+	gap: 13px;
+	padding: 18px;
+	background: linear-gradient(135deg, var(--ff-green-soft), transparent 62%);
+}
+
+.ForumFortressMark {
+	position: relative;
+	display: grid;
+	flex: 0 0 46px;
+	width: 46px;
+	height: 50px;
+	place-content: center;
+	gap: 4px;
+	clip-path: polygon(50% 0, 94% 16%, 88% 67%, 70% 88%, 50% 100%, 30% 88%, 12% 67%, 6% 16%);
+	background: linear-gradient(145deg, var(--ff-green-bright), #034f2e);
+	filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.18));
+}
+
+.ForumFortressMark i {
+	display: block;
+	width: 25px;
+	height: 4px;
+	border-radius: 3px;
+	background: #f4f0e5;
+}
+
+.ForumFortressMark i:nth-child(2) { width: 20px; }
+.ForumFortressMark i:nth-child(3) { width: 15px; }
+
+.ForumFortressHeroCopy {
+	display: grid;
+	flex: 1;
+	gap: 2px;
+}
+
+.ForumFortressHeroTitle {
+	margin: 0;
+	font-size: 17px;
+	font-weight: 700;
+	line-height: 1.2;
+}
+
+.ForumFortressHeroCopy span,
+.ForumFortressSectionHeader span,
+.ForumFortressMaintenance small,
+.ForumFortressSettings .form-text,
+.ForumFortressMaintenanceBody p {
+	color: var(--bs-secondary-color, var(--muted-color, #6c7480));
+}
+
+.ForumFortressPill {
+	padding: 5px 10px;
+	border-radius: 999px;
+	background: rgba(108, 116, 128, 0.12);
+	color: var(--bs-secondary-color, var(--muted-color, #6c7480));
+	font-size: 12px;
+	font-weight: 700;
+	white-space: nowrap;
+}
+
+.ForumFortressPill.is-connected {
+	background: var(--ff-green-soft);
+	color: var(--ff-green-bright);
+}
+
+.ForumFortressPill.is-disconnected {
+	background: rgba(197, 48, 48, 0.1);
+	color: #a42424;
+}
+
+.ForumFortressPill.is-checking {
+	background: rgba(108, 116, 128, 0.12);
+}
+
+.ForumFortressActionGrid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 10px;
+	padding: 0 18px 18px;
+}
+
+.ForumFortressButton {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 7px;
+	min-height: 42px;
+	width: 100%;
+	font-weight: 600;
+}
+
+.ForumFortressButton--portal {
+	background: var(--ff-green) !important;
+	border-color: var(--ff-green) !important;
+}
+
+.ForumFortressButton--portal:hover,
+.ForumFortressButton--portal:focus {
+	background: var(--ff-green-bright) !important;
+	border-color: var(--ff-green-bright) !important;
+}
+
+.ForumFortressButton--attack {
+	color: var(--ff-amber);
+	border-color: rgba(184, 99, 19, 0.45);
+}
+
+.ForumFortressNotice {
+	display: flex;
+	align-items: flex-start;
+	gap: 9px;
+	padding: 11px 13px;
+	border: 1px solid transparent;
+	border-radius: 8px;
+	line-height: 1.45;
+}
+
+.ForumFortressNotice.is-success {
+	border-color: rgba(21, 148, 88, 0.28);
+	background: rgba(21, 148, 88, 0.09);
+	color: var(--ff-green);
+}
+
+.ForumFortressNotice.is-error {
+	border-color: rgba(197, 48, 48, 0.28);
+	background: rgba(197, 48, 48, 0.09);
+	color: #a42424;
+}
+
+.ForumFortressNotice.is-warning {
+	border-color: rgba(184, 99, 19, 0.3);
+	background: rgba(184, 99, 19, 0.1);
+	color: var(--ff-amber);
+}
+
+.ForumFortressNotice [data-ff-message-text] {
+	flex: 1;
+}
+
+.ForumFortressNoticeDismiss {
+	margin: -7px -8px -7px 0;
+	color: inherit;
+	font-size: 20px;
+	line-height: 1;
+}
+
+.ForumFortressSectionHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 14px 16px;
+	border-bottom: 1px solid var(--ff-border);
+}
+
+.ForumFortressSectionHeader > div {
+	display: grid;
+	gap: 2px;
+}
+
+.ForumFortressRefresh {
+	width: auto;
+	min-height: 32px;
+	padding: 4px 8px;
+	color: var(--bs-secondary-color, var(--muted-color, #6c7480));
+}
+
+.ForumFortressStatusGrid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ForumFortressMetric {
+	display: grid;
+	gap: 4px;
+	min-width: 0;
+	padding: 13px 16px;
+	border-bottom: 1px solid var(--ff-border);
+}
+
+.ForumFortressMetric:nth-child(odd) {
+	border-right: 1px solid var(--ff-border);
+}
+
+.ForumFortressMetric:nth-last-child(-n + 2) {
+	border-bottom: 0;
+}
+
+.ForumFortressMetric span {
+	color: var(--bs-secondary-color, var(--muted-color, #6c7480));
+	font-size: 12px;
+}
+
+.ForumFortressMetric strong {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 14px;
+}
+
+.ForumFortressMetric.is-good strong {
+	color: var(--ff-green-bright);
+}
+
+.ForumFortressSettings .card-body {
+	padding: 18px 16px;
+}
+
+.ForumFortressCardFooter {
+	display: flex;
+	justify-content: flex-end;
+	padding: 0 16px 16px;
+}
+
+.ForumFortressCardFooter .ForumFortressButton {
+	width: auto;
+	min-width: 100px;
+}
+
+.ForumFortressMaintenance summary {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 14px 16px;
+	cursor: pointer;
+	list-style: none;
+}
+
+.ForumFortressMaintenance summary::-webkit-details-marker { display: none; }
+
+.ForumFortressMaintenance summary span {
+	display: grid;
+	gap: 2px;
+}
+
+.ForumFortressMaintenance[open] summary {
+	border-bottom: 1px solid var(--ff-border);
+}
+
+.ForumFortressMaintenance[open] summary > i {
+	transform: rotate(180deg);
+}
+
+.ForumFortressMaintenanceBody {
+	padding: 14px 16px 16px;
+}
+
+.ForumFortressMaintenanceBody p {
+	margin: 0 0 12px;
+}
+
+.ForumFortressMaintenanceBody .ForumFortressDisconnectHelp {
+	margin-top: 18px;
+}
+
+.ForumFortressMaintenanceActions {
+	max-width: 240px;
+}
+
+@media (max-width: 600px) {
+	.ForumFortressDashboard { padding-top: 16px; }
+	.ForumFortressHeroHeader { align-items: flex-start; }
+	.ForumFortressPill { margin-left: auto; }
+	.ForumFortressActionGrid,
+	.ForumFortressStatusGrid { grid-template-columns: 1fr; }
+	.ForumFortressMetric:nth-child(odd) { border-right: 0; }
+	.ForumFortressMetric:nth-last-child(2) { border-bottom: 1px solid var(--ff-border); }
+}
