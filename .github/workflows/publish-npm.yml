@@ -1,0 +1,121 @@
+name: Publish npm release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: nodebb-npm-release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org/
+          package-manager-cache: false
+      - name: Validate annotated release tag and npm identity
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          [[ "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          test "$(git cat-file -t "refs/tags/${GITHUB_REF_NAME}")" = tag
+          git fetch --no-tags origin main
+          git merge-base --is-ancestor HEAD refs/remotes/origin/main
+          test "$(node -p 'require("./package.json").name')" = nodebb-plugin-forum-fortress
+          version="$(node -p 'require("./package.json").version')"
+          test "${GITHUB_REF_NAME}" = "v${version}"
+          test "$(node -p 'require("./package.json").repository.url')" = git+https://github.com/Forum-Fortress/nodebb.git
+          node -e '
+            const v=require("child_process").execFileSync("npm",["--version"]).toString().trim().split(".").map(Number);
+            if(v[0]<11 || (v[0]===11 && (v[1]<5 || (v[1]===5 && v[2]<1))))
+              throw Error("npm >=11.5.1 required for OIDC publishing");
+          '
+          printf 'PACKAGE_VERSION=%s\n' "${version}" >>"${GITHUB_ENV}"
+      - name: Run independent release tests without credentials
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run lint
+          npm run check
+          npm pack --dry-run --ignore-scripts
+      - name: Stage reviewed npm tarball and inspect published version
+        id: existing
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p "${RUNNER_TEMP}/candidate" "${RUNNER_TEMP}/registry"
+          npm pack --ignore-scripts --json \
+            --pack-destination "${RUNNER_TEMP}/candidate" >"${RUNNER_TEMP}/candidate.json"
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          version=os.environ["PACKAGE_VERSION"]
+          result=json.loads((root/"candidate.json").read_text())
+          name=f"nodebb-plugin-forum-fortress-{version}.tgz"
+          assert len(result)==1 and result[0]["filename"]==name
+          assert (root/"candidate"/name).is_file()
+          PY
+          if npm view "nodebb-plugin-forum-fortress@${PACKAGE_VERSION}" version \
+            --json >"${RUNNER_TEMP}/npm-view.json" 2>"${RUNNER_TEMP}/npm-view.err"; then
+            echo "published=true" >>"${GITHUB_OUTPUT}"
+          elif grep -Eq 'E404|404 Not Found' "${RUNNER_TEMP}/npm-view.err"; then
+            echo "published=false" >>"${GITHUB_OUTPUT}"
+          else
+            cat "${RUNNER_TEMP}/npm-view.err" >&2
+            exit 1
+          fi
+      - name: Publish only a new version with npm OIDC, not an npm token
+        if: steps.existing.outputs.published == 'false'
+        run: npm publish --access public --ignore-scripts --provenance --registry=https://registry.npmjs.org/
+      - name: Verify npm registry has matching reviewed package bytes
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          for attempt in $(seq 1 12); do
+            if npm pack "nodebb-plugin-forum-fortress@${PACKAGE_VERSION}" \
+              --ignore-scripts --json --pack-destination "${RUNNER_TEMP}/registry" \
+              >"${RUNNER_TEMP}/registry.json" 2>"${RUNNER_TEMP}/registry.err"; then
+              break
+            fi
+            if [[ "${attempt}" == 12 ]]; then cat "${RUNNER_TEMP}/registry.err" >&2; exit 1; fi
+            sleep 5
+          done
+          python3 - <<'PY'
+          import hashlib, json, os, tarfile
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          version=os.environ["PACKAGE_VERSION"]
+          name=f"nodebb-plugin-forum-fortress-{version}.tgz"
+          result=json.loads((root/"registry.json").read_text())
+          assert len(result)==1 and result[0]["filename"]==name
+          def files(path):
+              result={}
+              with tarfile.open(path, "r:gz") as archive:
+                  for member in archive:
+                      if member.isdir(): continue
+                      if not member.isfile() or not member.name.startswith("package/"):
+                          raise RuntimeError(f"Unsafe npm package member: {member.name}")
+                      content=archive.extractfile(member)
+                      if content is None or member.name in result:
+                          raise RuntimeError(f"Invalid npm package member: {member.name}")
+                      result[member.name]=hashlib.sha256(content.read()).hexdigest()
+              return result
+          candidate=files(root/"candidate"/name)
+          published=files(root/"registry"/name)
+          if not candidate or candidate!=published:
+              raise SystemExit("Registry package differs from reviewed NodeBB source")
+          print(f"Verified nodebb-plugin-forum-fortress@{version}: {len(candidate)} matching files")
+          PY
