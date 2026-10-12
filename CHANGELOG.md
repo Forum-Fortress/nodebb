@@ -2,6 +2,14 @@
 
 All notable changes to the Forum Fortress NodeBB plugin are documented here.
 
+## 1.0.2 - 2026-10-12
+
+- Add opt-in, default-off seven-day native bans after two distinct high-confidence
+  spam BLOCKs above score 80 within 24 hours.
+- Local expiring counters, retry deduplication, staff exemption and safe actor
+  attribution. No new HTTP calls or changes for existing installations.
+- Include ACP controls, automated tests and updated documentation.
+
 ## 1.0.1 - 2026-09-25
 
 - Updated the NodeBB package catalogue description.

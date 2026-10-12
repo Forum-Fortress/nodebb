@@ -105,6 +105,14 @@
 							</div>
 						</div>
 						<div class="col-12">
+						<label class="form-label" for="ff-repeat-offender-action">{{tx("forum-fortress:settings.repeat_offender_action")}}</label>
+						<select class="form-select" id="ff-repeat-offender-action" name="repeat_offender_action" data-key="repeat_offender_action">
+							<option value="off">{{tx("forum-fortress:settings.repeat_off")}}</option>
+							<option value="suspend">{{tx("forum-fortress:settings.repeat_suspend")}}</option>
+						</select>
+						<div class="form-text">{{tx("forum-fortress:settings.repeat_help")}}</div>
+					</div>
+					<div class="col-12">
 							<div class="form-check form-switch">
 								<input class="form-check-input" type="checkbox" id="ff-debug" name="debug_log" data-key="debug_log" />
 								<label class="form-check-label" for="ff-debug">{{tx("forum-fortress:settings.debug_log")}}</label>

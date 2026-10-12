@@ -20,7 +20,7 @@ maintained in the official `Forum-Fortress/nodebb` repository.
 From the NodeBB root:
 
 ```bash
-npm install nodebb-plugin-forum-fortress@1.0.1 --save
+npm install nodebb-plugin-forum-fortress@1.0.2 --save
 ./nodebb activate nodebb-plugin-forum-fortress
 ./nodebb build
 ./nodebb restart
@@ -74,6 +74,29 @@ Review decisions follow the Flarum integration's v1 behavior and are allowed.
 NodeBB does not currently expose a clean, supported native approval-queue API
 that maps to Flarum's moderation bridge, so moderation synchronization is
 intentionally not included in this release.
+
+## Optional repeat-offender ban
+
+In **ACP > Plugins > Forum Fortress**, the **Repeated high-confidence spam
+blocks** setting defaults to **Off**, including on installations upgraded
+from earlier versions. Enabling **Ban the member for seven days** allows the
+forum to impose a native, reversible NodeBB ban after two independent, genuine
+BLOCK responses scoring strictly above 80 inside 24 hours.
+
+The service must include an explicit `escalation_eligible: true` boolean and
+a stable decision reference. Older edges, failures, registration checks,
+policy-only decisions and ordinary BLOCKs without the advisory are never
+counted. Only the signed-in local post/profile author qualifies, if their
+account is at most seven days old with ten posts or fewer. Administrators,
+global moderators, category moderators, remote ActivityPub accounts and
+guests are excluded. Event references and 24-hour counters stay in NodeBB's
+local database. There are no extra API calls or changes to bootstrap,
+credentials or the usual ALLOW/BLOCK contract.
+
+The first release intentionally provides **temporary bans only**. Account
+cleanup and permanent deletion require separate native-version verification
+and are not enabled by this setting. Admins can lift a ban through NodeBB's
+normal moderation interface.
 
 ## ActivityPub safety
 

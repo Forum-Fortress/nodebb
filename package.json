@@ -1,6 +1,6 @@
 {
   "name": "nodebb-plugin-forum-fortress",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Make Forum Spam history with Forum Fortress. One click anti spam protection for NodeBB.",
   "main": "library.js",
   "license": "GPL-2.0-or-later",

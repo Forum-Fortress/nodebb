@@ -50,6 +50,7 @@ const { ensureSettings } = require('./lib/settings');
 const { actorUid, buildUserPayload, requestContext } = require('./lib/payload');
 const { ForumFortressClient } = require('./lib/client');
 const { createControllers } = require('./lib/controllers');
+const { recordBlockedAttempt } = require('./lib/repeat-offenders');
 
 const client = new ForumFortressClient();
 const controllers = createControllers(client);
@@ -57,6 +58,21 @@ let heartbeatPromise = null;
 
 function safeString(value) {
 	return String(value ?? '').trim();
+}
+
+async function assertWithOptionalSuspension(response, targetUid) {
+	if (Number(targetUid) > 0 && response?.decision === 'block' && response.escalation_eligible === true) {
+		try {
+			await recordBlockedAttempt({
+				response, uid: targetUid, settings: await client.settings(),
+				db: client.database, user,
+			});
+		} catch (error) {
+			// Local moderation failure never weakens an original BLOCK.
+			console.warn('[forum-fortress] repeat-offender check failed:', error.message);
+		}
+	}
+	assertAllowed(response);
 }
 
 async function isAdministrator(hook) {
@@ -128,7 +144,15 @@ async function checkPostCreate(hook = {}) {
 	}
 	const isTopic = Boolean(data.isMain || post.isMain);
 	const title = isTopic ? safeString(data.title || post.title) : '';
-	assertAllowed(await postPayload(hook, 'create', isTopic, body, title));
+	// NodeBB's filter:post.create supplies { post, data } without req/uid.
+	// Its trusted local author is data.uid. Internal/system-marked events
+	// remain ineligible for account mutation without altering existing checks.
+	const authorUid = Number(data.uid ?? post.uid);
+	const explicitActorUid = Number(actorUid(hook));
+	const actingUid = explicitActorUid > 0 ? explicitActorUid : authorUid;
+	const escalationUid = !hasExplicitSystemMarker(hook) && actingUid > 0 && actingUid === authorUid
+		? actingUid : 0;
+	await assertWithOptionalSuspension(await postPayload(hook, 'create', isTopic, body, title), escalationUid);
 	return hook;
 }
 
@@ -175,7 +199,12 @@ async function checkPostEdit(hook = {}) {
 		post: { ...post, tid: context.tid || post.tid },
 		data: { ...data, tid: context.tid || data.tid },
 	};
-	assertAllowed(await postPayload(checkedHook, 'edit', context.isTopic, newBody, context.isTopic ? newTitle : ''));
+	const actingUid = Number(actorUid(hook));
+	const originalAuthorUid = Number(context.oldPost.uid);
+	await assertWithOptionalSuspension(
+		await postPayload(checkedHook, 'edit', context.isTopic, newBody, context.isTopic ? newTitle : ''),
+		actingUid > 0 && actingUid === originalAuthorUid ? actingUid : 0
+	);
 	return hook;
 }
 
@@ -195,13 +224,13 @@ async function checkProfile(hook = {}) {
 		return hook;
 	}
 	const content = profile.join('\n');
-	assertAllowed(await client.check('profile', await buildUserPayload(hook, user, {
+	await assertWithOptionalSuspension(await client.check('profile', await buildUserPayload(hook, user, {
 		uid: data.uid,
 		overrides: {
 			content,
 			links: extractExternalLinks(content, client.domain()),
 		},
-	})));
+	})), Number(actorUid(hook)) > 0 && Number(actorUid(hook)) === Number(data.uid) ? Number(data.uid) : 0);
 	return hook;
 }
 
