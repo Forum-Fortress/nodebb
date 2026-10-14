@@ -2,8 +2,11 @@
 
 Public NodeBB packages are built and published only from annotated release tags
 created by the reviewed private Forum Fortress publisher. A new tag vX.Y.Z
-must match package.json, be reachable from public main, and pass independent
-lint, unit tests, npm pack checks and registry content verification.
+must match package.json, be reachable from public main, and have completed
+private trusted CI (including NodeBB unit tests) before the publisher tags it.
+The public release job independently validates runtime syntax, lint, strictly
+allowlisted npm package contents and registry byte parity. Private test sources,
+fixtures and test workflows must never appear in a public tag or package.
 
 GitHub-hosted [Publish npm release](.github/workflows/publish-npm.yml) uses
 npm's OIDC trusted-publisher identity. No npm token or private service

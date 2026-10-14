@@ -157,6 +157,11 @@ define('admin/plugins/forum-fortress', ['settings', 'api', 'translator'], functi
 		const form = document.querySelector(`${selector} .forum-fortress-settings`);
 		if (!form) return;
 		Settings.load('forum-fortress', $(form));
+		const root = document.querySelector(selector);
+		const cleanOption = form.querySelector('option[value="suspend_and_clean"]');
+		const cleanupUnavailable = root?.getAttribute('data-repeat-cleanup-available') !== 'true';
+		if (cleanOption && cleanupUnavailable) cleanOption.disabled = true;
+		root?.querySelector('[data-repeat-cleanup-unavailable]')?.classList.toggle('d-none', !cleanupUnavailable);
 		document.querySelector(`${selector} #save`)?.addEventListener('click', () => {
 			Promise.resolve(Settings.save('forum-fortress', $(form))).catch(async () => {
 				await showMessage(await text('errors.request_failed'), 'danger');

@@ -1,4 +1,4 @@
-<div class="row forum-fortress-admin ForumFortressDashboard">
+<div class="row forum-fortress-admin ForumFortressDashboard" data-repeat-cleanup-available="{{repeatCleanupAvailable}}">
 	<div class="col-lg-12">
 		<div class="ForumFortressPanel">
 			<div class="ForumFortressCard ForumFortressHero">
@@ -109,8 +109,11 @@
 						<select class="form-select" id="ff-repeat-offender-action" name="repeat_offender_action" data-key="repeat_offender_action">
 							<option value="off">{{tx("forum-fortress:settings.repeat_off")}}</option>
 							<option value="suspend">{{tx("forum-fortress:settings.repeat_suspend")}}</option>
+							<option value="suspend_and_clean">{{tx("forum-fortress:settings.repeat_suspend_and_clean")}}</option>
 						</select>
 						<div class="form-text">{{tx("forum-fortress:settings.repeat_help")}}</div>
+						<div class="form-text">{{tx("forum-fortress:settings.repeat_cleanup_help")}}</div>
+						<div class="form-text d-none" data-repeat-cleanup-unavailable>{{tx("forum-fortress:settings.repeat_cleanup_unavailable")}}</div>
 					</div>
 					<div class="col-12">
 							<div class="form-check form-switch">

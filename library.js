@@ -7,6 +7,13 @@ const cron = (() => {
 		return null;
 	}
 })();
+const nconf = (() => {
+	try {
+		return require.main && require.main.require('nconf');
+	} catch (error) {
+		return null;
+	}
+})();
 const meta = (() => {
 	try {
 		return require.main && require.main.require('./src/meta');
@@ -42,6 +49,13 @@ const topics = (() => {
 		return null;
 	}
 })();
+const privileges = (() => {
+	try {
+		return require.main && require.main.require('./src/privileges');
+	} catch (error) {
+		return null;
+	}
+})();
 
 const { assertAllowed } = require('./lib/decisions');
 const { isRemoteEvent, isRemoteIdentifier } = require('./lib/activitypub');
@@ -50,22 +64,27 @@ const { ensureSettings } = require('./lib/settings');
 const { actorUid, buildUserPayload, requestContext } = require('./lib/payload');
 const { ForumFortressClient } = require('./lib/client');
 const { createControllers } = require('./lib/controllers');
-const { recordBlockedAttempt } = require('./lib/repeat-offenders');
+const { nativeCleanupAvailable, processCleanupQueue, recordBlockedAttempt } = require('./lib/repeat-offenders');
 
 const client = new ForumFortressClient();
-const controllers = createControllers(client);
+const controllers = createControllers(client, {
+	repeatCleanupAvailable: () => Boolean(nconf?.get('runJobs'))
+		&& nativeCleanupAvailable({ db: client.database, cron, user, posts, topics, privileges }),
+});
 let heartbeatPromise = null;
+let cleanupPromise = null;
 
 function safeString(value) {
 	return String(value ?? '').trim();
 }
 
-async function assertWithOptionalSuspension(response, targetUid) {
-	if (Number(targetUid) > 0 && response?.decision === 'block' && response.escalation_eligible === true) {
+async function assertWithOptionalSuspension(response, targetUid, content = '') {
+	if (Number(targetUid) > 0 && response?.decision === 'block'
+		&& (response.escalation_eligible === true || response.repeat_cleanup_eligible === true)) {
 		try {
 			await recordBlockedAttempt({
-				response, uid: targetUid, settings: await client.settings(),
-				db: client.database, user,
+				response, uid: targetUid, settings: await client.settings(), content,
+				db: client.database, user, cleanup: { cron, posts, topics, privileges },
 			});
 		} catch (error) {
 			// Local moderation failure never weakens an original BLOCK.
@@ -152,7 +171,7 @@ async function checkPostCreate(hook = {}) {
 	const actingUid = explicitActorUid > 0 ? explicitActorUid : authorUid;
 	const escalationUid = !hasExplicitSystemMarker(hook) && actingUid > 0 && actingUid === authorUid
 		? actingUid : 0;
-	await assertWithOptionalSuspension(await postPayload(hook, 'create', isTopic, body, title), escalationUid);
+	await assertWithOptionalSuspension(await postPayload(hook, 'create', isTopic, body, title), escalationUid, `${title}\n${body}`);
 	return hook;
 }
 
@@ -203,7 +222,8 @@ async function checkPostEdit(hook = {}) {
 	const originalAuthorUid = Number(context.oldPost.uid);
 	await assertWithOptionalSuspension(
 		await postPayload(checkedHook, 'edit', context.isTopic, newBody, context.isTopic ? newTitle : ''),
-		actingUid > 0 && actingUid === originalAuthorUid ? actingUid : 0
+		actingUid > 0 && actingUid === originalAuthorUid ? actingUid : 0,
+		`${context.isTopic ? newTitle : ''}\n${newBody}`
 	);
 	return hook;
 }
@@ -230,7 +250,7 @@ async function checkProfile(hook = {}) {
 			content,
 			links: extractExternalLinks(content, client.domain()),
 		},
-	})), Number(actorUid(hook)) > 0 && Number(actorUid(hook)) === Number(data.uid) ? Number(data.uid) : 0);
+	})), Number(actorUid(hook)) > 0 && Number(actorUid(hook)) === Number(data.uid) ? Number(data.uid) : 0, content);
 	return hook;
 }
 
@@ -243,6 +263,7 @@ async function init({ router }) {
 			routeHelpers.setupAdminPageRoute(router, '/admin/plugins/forum-fortress', controllers.page);
 		}
 		registerHeartbeat();
+		await registerRepeatCleanup();
 	} catch (error) {
 		// The plugin must never prevent NodeBB startup when the service is offline.
 		try {
@@ -269,6 +290,33 @@ function registerHeartbeat() {
 				})
 				.finally(() => { heartbeatPromise = null; });
 			return heartbeatPromise;
+		},
+	});
+}
+
+async function registerRepeatCleanup() {
+	if (!nconf?.get('runJobs') || !cron?.addJob || cron.hasJob?.('forum-fortress-repeat-cleanup')) return;
+	await cron.addJob({
+		name: 'forum-fortress-repeat-cleanup',
+		cronTime: '* * * * *',
+		async onTick() {
+			if (cleanupPromise) return cleanupPromise;
+			if (!nativeCleanupAvailable({ db: client.database, cron, user, posts, topics, privileges })) return 0;
+			cleanupPromise = processCleanupQueue({
+				settings: () => client.settings(),
+				db: client.database,
+				user,
+				posts,
+				topics,
+				privileges,
+				logger: console,
+			})
+				.catch((error) => {
+					console.warn(`[forum-fortress] repeat-offender cleanup worker deferred (${error?.constructor?.name || 'error'})`);
+					return 0;
+				})
+				.finally(() => { cleanupPromise = null; });
+			return cleanupPromise;
 		},
 	});
 }
@@ -311,4 +359,5 @@ module.exports = {
 	checkProfile,
 	client,
 	registerHeartbeat,
+	registerRepeatCleanup,
 };

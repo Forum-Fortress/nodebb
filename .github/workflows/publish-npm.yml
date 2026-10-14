@@ -44,11 +44,15 @@ jobs:
               throw Error("npm >=11.5.1 required for OIDC publishing");
           '
           printf 'PACKAGE_VERSION=%s\n' "${version}" >>"${GITHUB_ENV}"
-      - name: Run independent release tests without credentials
+      - name: Verify runtime syntax and stage only reviewed customer files
+        # Authoritative unit/integration tests run in private trusted CI before
+        # publication. No test or fixture tree is included in this public tag.
         run: |
           npm ci --ignore-scripts --no-audit --no-fund
           npm run lint
-          npm run check
+          node --check library.js
+          node --check lib/client.js
+          node --check lib/controllers.js
           npm pack --dry-run --ignore-scripts
       - name: Stage reviewed npm tarball and inspect published version
         id: existing
@@ -59,14 +63,54 @@ jobs:
           npm pack --ignore-scripts --json \
             --pack-destination "${RUNNER_TEMP}/candidate" >"${RUNNER_TEMP}/candidate.json"
           python3 - <<'PY'
-          import json, os
-          from pathlib import Path
+          import json, os, re, tarfile
+          from pathlib import Path, PurePosixPath
           root=Path(os.environ["RUNNER_TEMP"])
           version=os.environ["PACKAGE_VERSION"]
           result=json.loads((root/"candidate.json").read_text())
           name=f"nodebb-plugin-forum-fortress-{version}.tgz"
           assert len(result)==1 and result[0]["filename"]==name
-          assert (root/"candidate"/name).is_file()
+          tarball=root/"candidate"/name
+          assert tarball.is_file() and not tarball.is_symlink()
+          runtime={"CHANGELOG.md","CONTRIBUTING.md","NOTICE","languages/","lib/",
+                   "library.js","plugin.json","public/","templates/"}
+          implicit={"package.json","LICENSE","README.md"}
+          seen=set()
+          manifest=None
+          with tarfile.open(tarball,"r:gz") as archive:
+              for member in archive:
+                  path=PurePosixPath(member.name)
+                  if path.parts[:1]!=("package",) or path.is_absolute() or ".." in path.parts:
+                      raise RuntimeError("Unsafe npm package path")
+                  if member.isdir(): continue
+                  rel=PurePosixPath(*path.parts[1:])
+                  if not rel.parts or not member.isfile() or rel.as_posix() in seen:
+                      raise RuntimeError("Unexpected npm package member")
+                  partset={part.lower() for part in rel.parts}
+                  if partset & {"test","tests","fixture","fixtures","spec","specs","__tests__",
+                                "__mocks__",".github","node_modules","coverage","mocks"}:
+                      raise RuntimeError(f"Private test or fixture in npm package: {rel}")
+                  if re.search(r"^(?:test|fixture|mock|spec)[._-]|[._-](?:test|spec|fixture)\.(?:js|ts|json|php|rb|py)$",
+                               rel.name, re.I):
+                      raise RuntimeError(f"Test or fixture file in npm package: {rel}")
+                  filename=rel.as_posix()
+                  if filename not in implicit and not any(
+                      filename==entry or (entry.endswith("/") and filename.startswith(entry))
+                      for entry in runtime
+                  ):
+                      raise RuntimeError(f"Non-runtime file in npm package: {filename}")
+                  seen.add(filename)
+                  if filename=="package.json":
+                      stream=archive.extractfile(member)
+                      if stream is None: raise RuntimeError("Missing package manifest")
+                      manifest=json.loads(stream.read())
+          if not implicit <= seen or not isinstance(manifest,dict):
+              raise RuntimeError("Missing mandatory NodeBB customer files")
+          if manifest.get("name")!="nodebb-plugin-forum-fortress" or manifest.get("version")!=version:
+              raise RuntimeError("NodeBB published identity mismatch")
+          if not isinstance(manifest.get("files"),list) or set(manifest["files"])!=runtime:
+              raise RuntimeError("NodeBB runtime file allowlist changed")
+          print(f"Release tarball has {len(seen)} customer-only files")
           PY
           if npm view "nodebb-plugin-forum-fortress@${PACKAGE_VERSION}" version \
             --json >"${RUNNER_TEMP}/npm-view.json" 2>"${RUNNER_TEMP}/npm-view.err"; then

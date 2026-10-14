@@ -10,7 +10,7 @@ maintained in the official `Forum-Fortress/nodebb` repository.
 
 ## Compatibility
 
-- NodeBB 4.16+ (tested against NodeBB 4.16; compatibility range is limited to
+- NodeBB 4.16+ (native verification on NodeBB 4.16.2; compatibility range is limited to
   NodeBB 4.x)
 - Node.js 22 or newer, matching current NodeBB 4.x requirements
 - Outbound HTTPS access to Forum Fortress
@@ -20,7 +20,7 @@ maintained in the official `Forum-Fortress/nodebb` repository.
 From the NodeBB root:
 
 ```bash
-npm install nodebb-plugin-forum-fortress@1.0.2 --save
+npm install nodebb-plugin-forum-fortress@1.0.4 --save
 ./nodebb activate nodebb-plugin-forum-fortress
 ./nodebb build
 ./nodebb restart
@@ -75,28 +75,52 @@ NodeBB does not currently expose a clean, supported native approval-queue API
 that maps to Flarum's moderation bridge, so moderation synchronization is
 intentionally not included in this release.
 
-## Optional repeat-offender ban
+## Optional repeat-offender ban and cleanup
 
 In **ACP > Plugins > Forum Fortress**, the **Repeated high-confidence spam
-blocks** setting defaults to **Off**, including on installations upgraded
-from earlier versions. Enabling **Ban the member for seven days** allows the
-forum to impose a native, reversible NodeBB ban after two independent, genuine
-BLOCK responses scoring strictly above 80 inside 24 hours.
+blocks** setting defaults to **Off** on new installations and when no previous
+selection exists. Updating preserves an existing ban-only selection and keeps
+cleanup Off. Choose **Ban the member for seven days** or **Ban for
+seven days and clean public posts**. Ban-only mode keeps the existing gate of
+two independent, genuine BLOCK responses scoring strictly above 80 inside 24
+hours and ten posts or fewer. Cleanup mode uses the separate stricter gate of
+three independent cleanup-certified BLOCK responses scoring 80 or above inside
+24 hours and five posts or fewer.
 
-The service must include an explicit `escalation_eligible: true` boolean and
-a stable decision reference. Older edges, failures, registration checks,
-policy-only decisions and ordinary BLOCKs without the advisory are never
-counted. Only the signed-in local post/profile author qualifies, if their
-account is at most seven days old with ten posts or fewer. Administrators,
+Ban-only mode requires the service's `escalation_eligible: true` advisory.
+Cleanup mode requires the additive `repeat_cleanup_eligible: true` advisory
+and a stable decision reference. Older edges, failures, registration checks,
+policy-only decisions and BLOCKs without the relevant advisory are never
+counted. The local post/profile author qualifies only if the account is at
+most seven days old; the applicable post-count cap depends on the selected
+mode. Administrators,
 global moderators, category moderators, remote ActivityPub accounts and
 guests are excluded. Event references and 24-hour counters stay in NodeBB's
 local database. There are no extra API calls or changes to bootstrap,
 credentials or the usual ALLOW/BLOCK contract.
 
-The first release intentionally provides **temporary bans only**. Account
-cleanup and permanent deletion require separate native-version verification
-and are not enabled by this setting. Admins can lift a ban through NodeBB's
-normal moderation interface.
+The cleanup mode queues a separate background job only after three distinct
+cleanup-certified events and rechecks the five-post cap immediately before
+acting. Eligibility counts every forum post, including topic starters. It uses
+NodeBB's reversible per-post moderation API for up to five public replies.
+It excludes topic starters, private topics, profile fields, posts with uncertain ownership, and categories
+that guests cannot read. Other members' replies are not selected for deletion.
+Administrators can restore deleted posts and review the moderation history in
+NodeBB. It never deletes accounts or private messages. The queue records the
+ban and cleanup result separately and binds cleanup to its own native ban
+history entry. Disabling cleanup, a replacement ban or a moderator reversal
+cancels queued cleanup. Interrupted deletion uses durable receipts: still-hidden
+posts are reconciled; visible or restored ambiguous posts are preserved for
+review. Native deletion and the receipt are separate writes, so full rollback
+is not promised. Pre-ban queue or lease failures can retry with a later
+independent certificate; uncertain native ban writes remain conservative.
+
+Private native verification covers fresh activation, authentic public 1.0.2
+upgrade, uninstall with accounts/content/bans retained, three BLOCKs, the exact
+five/six-post boundary including starters, protected accounts, guest-unreadable
+categories, reached receipt/queue/lease faults, four concurrent native cron
+workers, restoration/replay and separate-forum isolation. The private harness
+is excluded from public source and npm packages.
 
 ## ActivityPub safety
 
