@@ -2,6 +2,11 @@
 
 All notable changes to the Forum Fortress NodeBB plugin are documented here.
 
+## 1.0.5 - Unreleased
+
+- Reuse one registration decision across repeated callbacks for the same native signup.
+- Keep the same registration check ID during endpoint failover.
+
 ## 1.0.4 - 2026-10-14
 
 - Require three cleanup-certified BLOCKs scoring 80 or above within 24 hours

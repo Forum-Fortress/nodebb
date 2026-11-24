@@ -73,6 +73,7 @@ const controllers = createControllers(client, {
 });
 let heartbeatPromise = null;
 let cleanupPromise = null;
+const registrationChecks = new WeakMap();
 
 function safeString(value) {
 	return String(value ?? '').trim();
@@ -126,14 +127,25 @@ async function checkRegistration(hook = {}) {
 		return hook;
 	}
 
-	const response = await client.check('register', await buildUserPayload(hook, user, {
+	const payload = await buildUserPayload(hook, user, {
 		uid: 0,
 		overrides: {
 			account_age_seconds: 0,
 			post_count: 0,
 		},
-	}));
-	assertAllowed(response);
+	});
+	const request = hook.req;
+	if (request && typeof request === 'object') {
+		const identity = JSON.stringify(payload);
+		let check = registrationChecks.get(request);
+		if (!check || check.identity !== identity) {
+			check = { identity, response: client.check('register', payload) };
+			registrationChecks.set(request, check);
+		}
+		assertAllowed(await check.response);
+	} else {
+		assertAllowed(await client.check('register', payload));
+	}
 	return hook;
 }
 
