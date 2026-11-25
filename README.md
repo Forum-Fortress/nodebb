@@ -20,7 +20,7 @@ maintained in the official `Forum-Fortress/nodebb` repository.
 From the NodeBB root:
 
 ```bash
-npm install nodebb-plugin-forum-fortress@1.0.5 --save
+npm install nodebb-plugin-forum-fortress@1.0.6 --save
 ./nodebb activate nodebb-plugin-forum-fortress
 ./nodebb build
 ./nodebb restart
@@ -130,10 +130,12 @@ post, or parent-post IDs. Local registered users and ordinary local guest
 posting remain eligible for checks. Administrator actions are identified with
 NodeBB's `user.isAdministrator` API and bypass protection checks.
 
-IP and User-Agent values come from NodeBB's hook request context. The plugin
-uses NodeBB's configured proxy handling (`req.ip`); it does not parse or trust
-`X-Forwarded-For` itself. When no reliable context is available, the field is
-omitted.
+IP and User-Agent values come from NodeBB's hook request context. Forum
+Fortress keeps the public client IP supplied by NodeBB. When the socket peer
+is non-public and NodeBB supplies a non-public or missing IP, the plugin
+checks `X-Forwarded-For`, `Forwarded`, `X-Real-IP`, `CF-Connecting-IP` and
+`True-Client-IP` in that order. Configure the reverse proxy to set these
+headers or strip any values supplied by visitors.
 
 ## Fail-open and routing
 

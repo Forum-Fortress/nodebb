@@ -61,7 +61,7 @@ const { assertAllowed } = require('./lib/decisions');
 const { isRemoteEvent, isRemoteIdentifier } = require('./lib/activitypub');
 const { extractExternalLinks } = require('./lib/links');
 const { ensureSettings } = require('./lib/settings');
-const { actorUid, buildUserPayload, requestContext } = require('./lib/payload');
+const { actorUid, buildUserPayload, captureHttpRequest, requestContext } = require('./lib/payload');
 const { ForumFortressClient } = require('./lib/client');
 const { createControllers } = require('./lib/controllers');
 const { nativeCleanupAvailable, processCleanupQueue, recordBlockedAttempt } = require('./lib/repeat-offenders');
@@ -151,13 +151,16 @@ async function checkRegistration(hook = {}) {
 
 async function postPayload(hook, action, isTopic, content, title = '') {
 	const checked = title ? `${title}\n\n${content}` : content;
+	const contentId = hook.post?.pid ?? hook.data?.pid;
+	const threadId = hook.post?.tid ?? hook.data?.tid;
 	return client.check(isTopic ? 'topic' : 'reply', await buildUserPayload(hook, user, {
 		uid: hook.data?.uid ?? hook.post?.uid,
+		nativeIp: action === 'create' ? hook.data?.ip : undefined,
 		overrides: {
 			content: checked,
 			links: extractExternalLinks(checked, client.domain()),
-			content_id: hook.post?.pid ?? hook.data?.pid,
-			thread_id: hook.post?.tid ?? hook.data?.tid,
+			content_id: contentId?.toString(),
+			thread_id: threadId?.toString(),
 			action,
 		},
 	}));
@@ -284,6 +287,10 @@ async function init({ router }) {
 	}
 }
 
+async function captureRequestContext({ app }) {
+	app.use(captureHttpRequest);
+}
+
 function registerHeartbeat() {
 	if (!cron?.addJob || cron.hasJob?.('forum-fortress-heartbeat')) {
 		return;
@@ -363,6 +370,7 @@ async function addApiRoutes({ router, middleware }) {
 
 module.exports = {
 	init,
+	captureRequestContext,
 	addApiRoutes,
 	addAdminNavigation,
 	checkRegistration,

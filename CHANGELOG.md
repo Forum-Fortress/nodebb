@@ -2,6 +2,11 @@
 
 All notable changes to the Forum Fortress NodeBB plugin are documented here.
 
+## 1.0.6 - 2026-11-25
+
+- Report the visitor IP automatically behind reverse proxies that forward it.
+- Send post and topic identifiers as strings so content checks reach the API.
+
 ## 1.0.5 - Unreleased
 
 - Reuse one registration decision across repeated callbacks for the same native signup.
