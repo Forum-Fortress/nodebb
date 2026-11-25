@@ -2,6 +2,10 @@
 
 All notable changes to the Forum Fortress NodeBB plugin are documented here.
 
+## 1.0.7 - 2026-11-25
+
+- Clarify the public package description and link directly to the platform, installation guide and support pages.
+
 ## 1.0.6 - 2026-11-25
 
 - Report the visitor IP automatically behind reverse proxies that forward it.

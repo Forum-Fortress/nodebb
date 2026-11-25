@@ -1,12 +1,12 @@
 {
   "name": "nodebb-plugin-forum-fortress",
-  "version": "1.0.6",
-  "description": "Make Forum Spam history with Forum Fortress. One click anti spam protection for NodeBB.",
+  "version": "1.0.7",
+  "description": "Anti-spam plugin for NodeBB 4.16 and later 4.x releases. Helps catch spam registrations, topics and replies.",
   "main": "library.js",
   "license": "GPL-2.0-or-later",
   "author": "Marscastle Ltd trading as Forum Fortress",
-  "homepage": "https://forumfortress.com/docs/install/nodebb/",
-  "documentation": "https://forumfortress.com/docs/",
+  "homepage": "https://forumfortress.com/platforms/nodebb/",
+  "documentation": "https://forumfortress.com/docs/install/nodebb/",
   "status": "https://status.forumfortress.com/",
   "keywords": [
     "nodebb",
@@ -23,7 +23,7 @@
     "url": "https://github.com/Forum-Fortress/nodebb/issues"
   },
   "support": {
-    "url": "https://forumfortress.com/#support"
+    "url": "https://forumfortress.com/support/#contact"
   },
   "engines": {
     "node": ">=22"

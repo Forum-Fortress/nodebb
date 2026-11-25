@@ -1,12 +1,13 @@
-# Forum Fortress for NodeBB
+# Forum Fortress anti-spam plugin for NodeBB
 
-Forum Fortress adds cloud-based spam and abuse protection to NodeBB 4.16 and
-later 4.x releases. The
-plugin checks supported local forum actions before NodeBB writes them and
-enforces `allow`, `review`, and `block` decisions from the Forum Fortress API.
+Forum Fortress helps NodeBB admins catch spam registrations, topics, replies
+and profile changes. The plugin checks supported submissions before NodeBB
+saves them, then applies the Forum Fortress service's decision.
 
-The npm package is `nodebb-plugin-forum-fortress`; public source and issues are
-maintained in the official `Forum-Fortress/nodebb` repository.
+Install `nodebb-plugin-forum-fortress` from npm or the NodeBB plugin catalogue.
+See the [NodeBB installation guide](https://forumfortress.com/docs/install/nodebb/)
+for setup, or visit the [NodeBB plugin page](https://forumfortress.com/platforms/nodebb/)
+for the current release and download options.
 
 ## Compatibility
 
@@ -20,14 +21,14 @@ maintained in the official `Forum-Fortress/nodebb` repository.
 From the NodeBB root:
 
 ```bash
-npm install nodebb-plugin-forum-fortress@1.0.6 --save
+npm install nodebb-plugin-forum-fortress@1.0.7 --save
 ./nodebb activate nodebb-plugin-forum-fortress
 ./nodebb build
 ./nodebb restart
 ```
 
 The plugin can also be installed and activated from **ACP > Extend > Plugins**
-after it is published to npm and accepted by the NodeBB package registry.
+when the catalogue has picked up the npm release.
 
 After activation, open **ACP > Plugins > Forum Fortress**. Bootstrap is
 automatic and anonymous: the plugin persists the returned site ID and API key
@@ -194,16 +195,16 @@ a generic-route `404`. It never falls back to the Flarum bootstrap route.
    hostname.
 5. If the backend reports an unknown bootstrap route, deploy
    `/v1/site/nodebb/bootstrap` before retrying **Synchronize now**.
-6. Contact [Forum Fortress support](https://forumfortress.com/#support) and
+6. Contact [Forum Fortress support](https://forumfortress.com/support/#contact) and
    include the sanitized error, selected region, and NodeBB/plugin versions.
 
 ## Links
 
-- [Forum Fortress documentation](https://forumfortress.com/docs/)
-- [NodeBB installation documentation](https://docs.nodebb.org/)
+- [Forum Fortress installation guide for NodeBB](https://forumfortress.com/docs/install/nodebb/)
+- [NodeBB platform documentation](https://docs.nodebb.org/)
 - [Service status](https://status.forumfortress.com/)
-- [Support](https://forumfortress.com/#support)
-- [Source and issues](https://github.com/Forum-Fortress/nodebb)
+- [Contact Forum Fortress](https://forumfortress.com/support/#contact)
+- [Report a plugin issue](https://github.com/Forum-Fortress/nodebb/issues)
 
 ## Licence
 
